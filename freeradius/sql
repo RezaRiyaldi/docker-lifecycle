@@ -1,0 +1,53 @@
+# =============================================================================
+# FreeRADIUS - modul SQL (PostgreSQL)
+# Dipasang ke /etc/freeradius/mods-enabled/sql oleh compose/radius.yml.
+# Site "default" bawaan sudah memanggil "-sql" pada authorize, accounting,
+# dan post-auth, jadi cukup dengan mengaktifkan modul ini.
+# Isi disalin dari template resmi mods-available/sql (3.2), dengan koneksi
+# PostgreSQL dan pembacaan klien dari tabel "nas".
+# =============================================================================
+sql {
+    dialect = "postgresql"
+    driver  = "rlm_sql_postgresql"
+
+    server = "$ENV{RADIUS_DB_HOST}"
+    port   = 5432
+    login  = "$ENV{RADIUS_DB_USER}"
+    password = "$ENV{RADIUS_DB_PASSWORD}"
+    radius_db = "$ENV{RADIUS_DB_NAME}"
+
+    postgresql {
+        send_application_name = yes
+    }
+
+    acct_table1      = "radacct"
+    acct_table2      = "radacct"
+    postauth_table   = "radpostauth"
+    authcheck_table  = "radcheck"
+    groupcheck_table = "radgroupcheck"
+    authreply_table  = "radreply"
+    groupreply_table = "radgroupreply"
+    usergroup_table  = "radusergroup"
+
+    delete_stale_sessions = yes
+
+    pool {
+        start = ${thread[pool].start_servers}
+        min   = ${thread[pool].min_spare_servers}
+        max   = ${thread[pool].max_servers}
+        spare = ${thread[pool].max_spare_servers}
+        uses  = 0
+        retry_delay = 30
+        lifetime = 0
+        idle_timeout = 60
+        max_retries = 5
+    }
+
+    # Baca klien (MikroTik) dari tabel "nas". Perubahan butuh restart container.
+    read_clients = yes
+    client_table = "nas"
+
+    group_attribute = "SQL-Group"
+
+    $INCLUDE ${modconfdir}/${.:name}/main/${dialect}/queries.conf
+}

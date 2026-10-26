@@ -1,0 +1,42 @@
+services:
+  node20:
+    build: ../../node/docker/node20
+    container_name: dev-node20
+    user: "${UID}:${GID}"
+    working_dir: /var/www/n20
+    volumes:
+      - ../../node/www:/var/www
+    ports:
+      - "3020:3000"
+    networks:
+      - default
+    tty: true
+    restart: always
+
+  node22:
+    build: ../../node/docker/node22
+    container_name: dev-node22
+    user: "${UID}:${GID}"
+    working_dir: /var/www/n22
+    volumes:
+      - ../../node/www:/var/www
+    ports:
+      - "3022:3000"
+    networks:
+      - default
+    tty: true
+    restart: always
+
+  node24:
+    build: ../../node/docker/node24
+    container_name: dev-node24
+    user: "${UID}:${GID}"
+    working_dir: /var/www/n24/my-app
+    volumes:
+      - ../../node/www:/var/www
+    ports:
+      - "3024:3000"
+    networks:
+      - default
+    tty: true
+    restart: always
