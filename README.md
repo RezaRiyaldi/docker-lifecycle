@@ -223,23 +223,43 @@ exit
 
 > Catatan: Setelah reverse proxy dikonfigurasi (section 8), akses via domain/subdomain di port 80/443. Jangan mengandalkan akses langsung `IP_SERVER:3024` untuk RnD. Hanya dipakai untuk pengecekan internal sebelum setup Nginx.
 
-## 8. Konfigurasi Domain & Subdomain (RnD)
+## 8. Konfigurasi Domain & Subdomain (Fokus Pakai Domain)
 
-### 8.1 Untuk PHP (`core-r`) via subdomain
-Buat vhost baru di `~/project/php/nginx/core-r.conf`:
+Kamu beli 1 domain untuk RnD (contoh: `domainrnd.com`). Dari domain ini, buat **subdomain terpisah** untuk tiap aplikasi biar tetap rapi dan siap dipindah saat go public.
+
+### 8.1 Atur DNS di Registrar/Cloudflare
+Sebelum setup Nginx, arahkan DNS terlebih dahulu ke IP publik server fisik kamu.
+
+| Record | Type | Host | Value | Keterangan |
+|---|---|---|---|---|
+| Core PHP (core-r) | A | `core-r.domainrnd.com` | `IP_PUBLIK_SERVER` | Untuk aplikasi Laravel/ PHP 8.5 |
+| Core FE (core-r-fe) | A | `app.domainrnd.com` | `IP_PUBLIK_SERVER` | Untuk aplikasi Node 24 (bisa diganti sesuai naming kamu) |
+| (Opsional) Root | A | `domainrnd.com` | `IP_PUBLIK_SERVER` | Hanya jika ada halaman landing |
+
+> **Tips Cloudflare:** Untuk awal RnD, bisa pakai mode **DNS Only (grey cloud)** biar lebih mudah debug SSL. Setelah setup stabil, bisa dialihkan ke Proxied (orange cloud) sesuai kebutuhan.
+
+Tunggu propagasi DNS (bisa beberapa menit, bisa lebih). Bisa dicek pakai `dig` atau `nslookup`.
+
+```bash
+dig core-r.domainrnd.com +short
+dig app.domainrnd.com +short
+```
+
+### 8.2 Buat Vhost Nginx untuk PHP (`core-r`) - Lewat Domain
+Buat file vhost baru di `~/project/php/nginx/core-r.conf`:
 
 ```nginx
-# HTTP -> HTTPS
+# HTTP -> HTTPS redirect
 server {
     listen 80;
-    server_name core-r.rnd.domainkamu.com;
+    server_name core-r.domainrnd.com;
     return 301 https://$host$request_uri;
 }
 
 # HTTPS
 server {
     listen 443 ssl;
-    server_name core-r.rnd.domainkamu.com;
+    server_name core-r.domainrnd.com;
     client_max_body_size 12m;
 
     ssl_certificate     /etc/nginx/ssl/fullchain.pem;
@@ -266,21 +286,21 @@ server {
 }
 ```
 
-### 8.2 Untuk Node (`core-r-fe`) via reverse proxy
-Buat vhost baru di `~/project/php/nginx/core-r-fe.conf`:
+### 8.3 Buat Vhost Nginx untuk Node (`core-r-fe`) - Lewat Domain
+Buat file vhost baru di `~/project/php/nginx/core-r-fe.conf`:
 
 ```nginx
-# HTTP -> HTTPS
+# HTTP -> HTTPS redirect
 server {
     listen 80;
-    server_name app.rnd.domainkamu.com;
+    server_name app.domainrnd.com;
     return 301 https://$host$request_uri;
 }
 
 # HTTPS
 server {
     listen 443 ssl;
-    server_name app.rnd.domainkamu.com;
+    server_name app.domainrnd.com;
     client_max_body_size 12m;
 
     ssl_certificate     /etc/nginx/ssl/fullchain.pem;
@@ -300,39 +320,65 @@ server {
 }
 ```
 
-Reload nginx setelah menambah vhost:
-```bash
-docker exec dev-nginx nginx -t && docker exec dev-nginx nginx -s reload
+> `proxy_pass http://node24:3000` mengarah ke service Node di dalam Docker network, jadi aman tanpa expose port ke publik.
+
+### 8.4 Pasang SSL untuk Domain Real
+Kamu wajib pakai sertifikat valid untuk HTTPS. Ada 2 cara yang umum dipakai bareng stack ini:
+
+| Metode | Keterangan | Catatan |
+|---|---|---|
+| **Let's Encrypt (Certbot)** | Gratis & paling umum. Bisa install di host Ubuntu, lalu mount `fullchain.pem` & `privkey.pem` ke `php/ssl/`. | Sangat disarankan untuk domain RnD. |
+| **Cloudflare Origin Certificate** | Gratis. Cocok kalo pakai Cloudflare. | Hanya valid antar Cloudflare <-> server kamu. Tetap aman untuk RnD. |
+| **mkcert** | Hanya untuk local/testing, **tidak disarankan** untuk domain publik. | Hindari dipakai di server fisik dengan domain beneran. |
+
+Setelah sertifikat siap, letakkan di `~/project/php/ssl/` dengan nama:
+```text
+fullchain.pem
+privkey.pem
 ```
 
-### 8.3 Setup DNS & SSL
-1. Arahkan DNS A record (subdomain) ke IP publik server
-2. Pasang sertifikat di `php/ssl/` (`fullchain.pem` & `privkey.pem`) atau sesuaikan path di vhost
-3. Untuk production-like, disarankan pakai Let's Encrypt
+Atau sesuaikan nama/path di vhost yang baru kamu buat.
+
+### 8.5 Reload & Test
+```bash
+# Tes konfigurasi nginx
+docker exec dev-nginx nginx -t
+
+# Reload nginx
+docker exec dev-nginx nginx -s reload
+
+# Cek akses lewat domain
+curl -I https://core-r.domainrnd.com
+curl -I https://app.domainrnd.com
+```
+
+Buka browser dan test langsung lewat: `https://core-r.domainrnd.com` dan `https://app.domainrnd.com`.
 
 ## 9. Kekurangan & Rekomendasi
 
 | Temuan | Risiko | Rekomendasi |
 |---|---|---|
 | `node24` working_dir beda dengan project `core-r-fe` | Sedang | Samakan path (Opsi A atau B di section 7.2) |
-| Belum ada nginx vhost untuk Node | Sedang | Tambahkan vhost reverse proxy (section 8.2) agar konsisten pakai domain + 80/443 |
+| Belum ada nginx vhost untuk Node | Sedang | Tambahkan vhost reverse proxy (section 8.3) agar semua akses lewat domain + 80/443 |
 | `queue-worker` & `scheduler` hardcode `p84/riyerp` | Rendah (jika belum dipakai) | Komentari di `docker-compose.yml` atau sesuaikan ke project yang dipakai |
-| `.env` lama berisi kredensial OAuth | Tinggi (jika ter-expose) | Gunakan `.env` baru dari `.env.example`, kosongkan kredensial jika tidak dipakai |
-| Port Node di-expose langsung | Sedang | Tutup akses langsung setelah reverse proxy berjalan, atau batasi dengan firewall |
-| SSL masih pakai wildcard contoh | Sedang | Ganti dengan sertifikat sesuai domain RnD yang akan dipakai |
+| `.env` lama berisi kredensial OAuth | Tinggi (jika ter-expose) | Use `.env` baru from `.env.example`, kosongkan kredensial if not needed |
+| Port Node di-expose langsung | Sedang | **Tutup port langsung** (`3024`) setelah reverse proxy berhasil jalan lewat domain. Gunakan firewall (`ufw`) untuk membatasi akses. |
+| SSL masih pakai wildcard contoh | Sedang | Ganti dengan sertifikat valid sesuai domain RnD yang kamu beli (Let's Encrypt/Cloudflare Origin) |
 
-## 10. Checklist Install Cepat
+## 10. Checklist Install Cepat (Fokus Domain)
 
+- [ ] **Beli domain** untuk RnD (mis. `domainrnd.com`)
+- [ ] **Setup DNS**: A record `core-r.domainrnd.com` & `app.domainrnd.com` -> IP publik server
 - [ ] Install Docker + Docker Compose Plugin di Ubuntu 22.04
 - [ ] Pindahkan `docker/`, `php/`, `node/` ke server (`~/project/`)
 - [ ] `cp docker/.env.example docker/.env` & isi `UID:GID` sesuai `id -u/id -g`
 - [ ] Sesuaikan `node24` working_dir atau buat symlink ke `core-r-fe`
 - [ ] Setup `.env` di `php/www/p85/core-r/` & `node/www/n24/core-r-fe/`
-- [ ] Pasang sertifikat ke `php/ssl/`
-- [ ] Tambah DNS A record + vhost nginx untuk `core-r` & `core-r-fe`
+- [ ] **Dapatkan & pasang SSL** (Let's Encrypt / Cloudflare Origin) ke `php/ssl/` (`fullchain.pem`, `privkey.pem`)
+- [ ] Buat vhost `core-r.conf` & `core-r-fe.conf` di `php/nginx/` (sesuai nama domain kamu)
 - [ ] `docker compose up -d --build`
-- [ ] Setup firewall: `sudo ufw allow 80,443 && sudo ufw enable`
-- [ ] Test akses via subdomain HTTPS
+- [ ] Setup firewall: `sudo ufw allow 80,443 && sudo ufw enable` (tutup port Node langsung jika masih terbuka)
+- [ ] Test akses via `https://core-r.domainrnd.com` & `https://app.domainrnd.com`
 
 ## Troubleshooting Singkat
 
