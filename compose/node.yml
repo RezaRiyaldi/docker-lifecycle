@@ -31,11 +31,11 @@ services:
     build: ../../node/docker/node24
     container_name: dev-node24
     user: "${UID}:${GID}"
-    working_dir: /var/www/n24/my-app
+    working_dir: /var/www/n24
     volumes:
       - ../../node/www:/var/www
     ports:
-      - "3024:3000"
+      - "${NODE24_PORT:-3024:3000}"
     networks:
       - default
     tty: true

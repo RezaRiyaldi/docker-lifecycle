@@ -29,8 +29,8 @@ Dari root workspace (`/home/boy/Documents/project/`):
 Alur request di **server**:
 
 ```text
-Internet ──443──► Caddy (HTTPS otomatis) ──► nginx ──► php-fpm (php85)    core-r.domainrnd.com
-                                         └─► node24 :3000                  app.domainrnd.com
+Internet ──443──► Caddy (HTTPS otomatis) ──► nginx ──► php-fpm (php85)    core-r.devgenz.my.id
+                                         └─► node24 :3000                  app.devgenz.my.id
 ```
 
 Alur request di **lokal** (tanpa Caddy, seperti sebelumnya):
@@ -61,7 +61,7 @@ Tiga hal ini terpisah dan sering tertukar:
 
 | | Fungsi | Diurus di |
 |---|---|---|
-| **Domain** | Nama (`core-r.domainrnd.com`) yang kamu beli | Registrar (mis. Rumahweb) |
+| **Domain** | Nama (`core-r.devgenz.my.id`) yang kamu beli | Registrar (mis. Rumahweb) |
 | **DNS (record A)** | Menunjuk nama itu ke IP publik server | Panel DNS registrar / Cloudflare |
 | **Sertifikat SSL** | Bukti bahwa server di balik nama itu milikmu, sekaligus enkripsi HTTPS | **Web server** (di sini: Caddy) |
 
@@ -363,7 +363,7 @@ Di `.env` aplikasi untuk server, pastikan:
 ```env
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://core-r.domainrnd.com
+APP_URL=https://core-r.devgenz.my.id
 ```
 
 Dan baca bagian 9.4 (trusted proxy) supaya Laravel memahami bahwa pengunjung memakai HTTPS.
@@ -420,24 +420,24 @@ exit
 
 ## 9. Konfigurasi Domain, Caddy, dan HTTPS
 
-Kamu beli 1 domain untuk RnD (contoh: `domainrnd.com`). Dari domain ini, buat **subdomain terpisah** untuk tiap aplikasi biar tetap rapi dan siap dipindah saat go public.
+Kamu beli 1 domain untuk RnD (contoh: `devgenz.my.id`). Dari domain ini, buat **subdomain terpisah** untuk tiap aplikasi biar tetap rapi dan siap dipindah saat go public.
 
 ### 9.1 Atur DNS di Registrar/Cloudflare
 Sebelum menyalakan Caddy, arahkan DNS terlebih dahulu ke IP publik server fisik kamu.
 
 | Record | Type | Host | Value | Keterangan |
 |---|---|---|---|---|
-| Core PHP (core-r) | A | `core-r.domainrnd.com` | `IP_PUBLIK_SERVER` | Untuk aplikasi Laravel/ PHP 8.5 |
-| Core FE (core-r-fe) | A | `app.domainrnd.com` | `IP_PUBLIK_SERVER` | Untuk aplikasi Node 24 (bisa diganti sesuai naming kamu) |
-| (Opsional) Root | A | `domainrnd.com` | `IP_PUBLIK_SERVER` | Hanya jika ada halaman landing |
+| Core PHP (core-r) | A | `core-r.devgenz.my.id` | `IP_PUBLIK_SERVER` | Untuk aplikasi Laravel/ PHP 8.5 |
+| Core FE (core-r-fe) | A | `app.devgenz.my.id` | `IP_PUBLIK_SERVER` | Untuk aplikasi Node 24 (bisa diganti sesuai naming kamu) |
+| (Opsional) Root | A | `devgenz.my.id` | `IP_PUBLIK_SERVER` | Hanya jika ada halaman landing |
 
 > **Cloudflare:** set record ke **DNS Only (grey cloud)** saat pertama kali meminta sertifikat. Kalau record Proxied (orange cloud), pembuktian domain bisa gagal atau menghasilkan redirect berulang. Setelah HTTPS stabil, boleh dialihkan ke Proxied dengan mode SSL `Full (strict)`.
 
 Tunggu propagasi DNS (bisa beberapa menit, bisa lebih). Bisa dicek pakai `dig` atau `nslookup`.
 
 ```bash
-dig core-r.domainrnd.com +short
-dig app.domainrnd.com +short
+dig core-r.devgenz.my.id +short
+dig app.devgenz.my.id +short
 ```
 
 Hasilnya harus IP publik server. Jangan lanjut sebelum benar.
@@ -448,7 +448,7 @@ Buat file `~/project/docker/caddy/Caddyfile`:
 ```caddy
 {
 	# Email untuk pemberitahuan dari Let's Encrypt (opsional tapi disarankan)
-	email admin@domainrnd.com
+	email admin@devgenz.my.id
 
 	# Saat uji coba, buka komentar baris berikut untuk memakai server STAGING
 	# Let's Encrypt (tidak terkena batas percobaan, tapi sertifikatnya tidak dipercaya browser).
@@ -456,12 +456,12 @@ Buat file `~/project/docker/caddy/Caddyfile`:
 	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-core-r.domainrnd.com {
+core-r.devgenz.my.id {
 	encode gzip
 	reverse_proxy nginx:80
 }
 
-app.domainrnd.com {
+app.devgenz.my.id {
 	encode gzip
 	reverse_proxy node24:3000
 }
@@ -481,7 +481,7 @@ Buat file vhost baru di `~/project/php/nginx/core-r.conf`. Nginx hanya mendengar
 ```nginx
 server {
     listen 80;
-    server_name core-r.domainrnd.com;
+    server_name core-r.devgenz.my.id;
     client_max_body_size 12m;
 
     root /var/www/p85/core-r/public;
@@ -525,7 +525,7 @@ Di `bootstrap/app.php` (cek dulu apakah sudah ada konfigurasi proxy di project):
 Karena FE (`app.`) dan API (`core-r.`) berbeda subdomain, atur juga CORS agar API menerima origin FE:
 
 ```text
-allowed_origins: https://app.domainrnd.com
+allowed_origins: https://app.devgenz.my.id
 ```
 
 (di `config/cors.php`, atau lewat `.env` kalau project sudah menyediakan variabelnya).
@@ -537,12 +537,12 @@ Vite memblokir host yang tidak dikenal dan salah menebak port HMR saat berada di
 server: {
   host: '0.0.0.0',
   port: 3000,
-  allowedHosts: ['app.domainrnd.com'],   // tanpa ini muncul "Blocked request. This host is not allowed"
-  hmr: { clientPort: 443 },              // supaya hot reload lewat wss://app.domainrnd.com
+  allowedHosts: ['app.devgenz.my.id'],   // tanpa ini muncul "Blocked request. This host is not allowed"
+  hmr: { clientPort: 443 },              // supaya hot reload lewat wss://app.devgenz.my.id
 },
 ```
 
-Variabel build seperti `VITE_API_URL` (atau yang setara) diisi `https://core-r.domainrnd.com` di `.env` FE. Nilai ini tertanam saat build, jadi ubah lalu build ulang kalau berganti. Kalau FE memakai framework lain (Nuxt/Next), pengaturan padanannya serupa: izinkan host dan beri tahu port publik.
+Variabel build seperti `VITE_API_URL` (atau yang setara) diisi `https://core-r.devgenz.my.id` di `.env` FE. Nilai ini tertanam saat build, jadi ubah lalu build ulang kalau berganti. Kalau FE memakai framework lain (Nuxt/Next), pengaturan padanannya serupa: izinkan host dan beri tahu port publik.
 
 ### 9.6 Reload & Test
 ```bash
@@ -556,16 +556,16 @@ docker exec dev-nginx nginx -s reload
 docker logs -f dev-caddy
 
 # Cek akses lewat domain
-curl -I https://core-r.domainrnd.com
-curl -I https://app.domainrnd.com
+curl -I https://core-r.devgenz.my.id
+curl -I https://app.devgenz.my.id
 
 # Cek penerbit sertifikat
-curl -vI https://core-r.domainrnd.com 2>&1 | grep -E "issuer:|expire date|SSL certificate verify"
+curl -vI https://core-r.devgenz.my.id 2>&1 | grep -E "issuer:|expire date|SSL certificate verify"
 ```
 
 Hasil yang benar: `issuer` berisi `Let's Encrypt` dan `SSL certificate verify ok`. Uji juga dari HP dengan data seluler (bukan Wi-Fi rumah). Kalau gembok muncul tanpa peringatan, sertifikatnya dipercaya perangkat lain juga.
 
-Buka browser dan test langsung lewat: `https://core-r.domainrnd.com` dan `https://app.domainrnd.com`.
+Buka browser dan test langsung lewat: `https://core-r.devgenz.my.id` dan `https://app.devgenz.my.id`.
 
 ## 10. Kekurangan & Rekomendasi
 
@@ -584,8 +584,8 @@ Buka browser dan test langsung lewat: `https://core-r.domainrnd.com` dan `https:
 
 ## 11. Checklist Install Cepat (Fokus Domain)
 
-- [ ] **Beli domain** untuk RnD (mis. `domainrnd.com`)
-- [ ] **Setup DNS**: A record `core-r.domainrnd.com` & `app.domainrnd.com` -> IP publik server (cek dengan `dig`)
+- [ ] **Beli domain** untuk RnD (mis. `devgenz.my.id`)
+- [ ] **Setup DNS**: A record `core-r.devgenz.my.id` & `app.devgenz.my.id` -> IP publik server (cek dengan `dig`)
 - [ ] Firewall penyedia server (jika ada): buka 22, 80, 443
 - [ ] Di server: `ufw allow OpenSSH`, `ufw allow 80/tcp`, `ufw allow 443/tcp`, lalu `ufw enable`
 - [ ] Install Docker + Docker Compose Plugin di Ubuntu 22.04
@@ -601,7 +601,7 @@ Buka browser dan test langsung lewat: `https://core-r.domainrnd.com` dan `https:
 - [ ] Atur `allowedHosts` dan `hmr.clientPort` di Vite
 - [ ] `docker compose up -d --build caddy nginx php85 node24 postgres redis`
 - [ ] Verifikasi `sudo ss -tlnp`: hanya 22, 80, 443 yang terbuka ke luar
-- [ ] Test akses via `https://core-r.domainrnd.com` & `https://app.domainrnd.com`, dan dari HP dengan data seluler
+- [ ] Test akses via `https://core-r.devgenz.my.id` & `https://app.devgenz.my.id`, dan dari HP dengan data seluler
 
 ## Troubleshooting Singkat
 

@@ -3,28 +3,28 @@ services:
     image: nginx:latest
     container_name: dev-nginx
     ports:
-      - "80:80"
-      - "8443:443"
+      - "${NGINX_HTTP:-80:80}"
+      - "${NGINX_HTTPS:-8443:443}"
     volumes:
       - ../../php/www:/var/www
       - ../../php/nginx:/etc/nginx/conf.d
       - ../../php/ssl:/etc/nginx/ssl
     restart: always
     depends_on:
-      php56:
-        condition: service_started
-      php74:
-        condition: service_started
-      php80:
-        condition: service_started
-      php81:
-        condition: service_started
-      php82:
-        condition: service_started
-      php83:
-        condition: service_started
-      php84:
-        condition: service_started
+      # php56:
+      #   condition: service_started
+      # php74:
+      #   condition: service_started
+      # php80:
+      #   condition: service_started
+      # php81:
+      #   condition: service_started
+      # php82:
+      #   condition: service_started
+      # php83:
+      #   condition: service_started
+      # php84:
+      #   condition: service_started
       php85:
         condition: service_started
     networks:

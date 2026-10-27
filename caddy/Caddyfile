@@ -1,0 +1,33 @@
+{
+	# Email untuk notifikasi Let's Encrypt (disarankan diisi)
+	email admin@devgenz.my.id
+
+	# Uncomment untuk testing pertama pakai staging (hindari rate-limit)
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# PHP Core (Laravel) via nginx internal
+core-r.devgenz.my.id {
+	encode gzip zstd
+
+	reverse_proxy nginx:80 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}
+
+# Node FE (core-r-fe) langsung ke node24
+app.devgenz.my.id {
+	encode gzip zstd
+
+	reverse_proxy node24:3000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}
