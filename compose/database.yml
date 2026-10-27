@@ -17,10 +17,10 @@ services:
     environment:
       TZ: Asia/Jakarta
       MYSQL_USER: mysql
-      MYSQL_PASSWORD: r3tMysql
-      MYSQL_ROOT_PASSWORD: r3tMysql
+      MYSQL_PASSWORD: ${QA_MYSQL_PASSWORD:?QA_MYSQL_PASSWORD belum diatur}
+      MYSQL_ROOT_PASSWORD: ${QA_MYSQL_ROOT_PASSWORD:?QA_MYSQL_ROOT_PASSWORD belum di atur}
     ports:
-      - 3307:3306
+      - "127.0.0.1:3307:3306"
     volumes:
       - ../docker-volumes/mysql-data:/var/lib/mysql
     networks:
@@ -44,10 +44,10 @@ services:
     environment:
       TZ: Asia/Jakarta
       MYSQL_USER: mysql
-      MYSQL_PASSWORD: r3tMysql
-      MYSQL_ROOT_PASSWORD: r3tMysql
+      MYSQL_PASSWORD: ${QA_MYSQL57_PASSWORD:?QA_MYSQL57_PASSWORD belum diatur}
+      MYSQL_ROOT_PASSWORD: ${QA_MYSQL57_ROOT_PASSWORD:?QA_MYSQL57_ROOT_PASSWORD belum diatur}
     ports:
-      - 3308:3306
+      - "127.0.0.1:3308:3306"
     volumes:
       - ../docker-volumes/mysql57-data:/var/lib/mysql
     networks:
@@ -61,7 +61,7 @@ services:
       TZ: Asia/Jakarta
       PGTZ: Asia/Jakarta
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: r3tPostgres
+      POSTGRES_PASSWORD: ${QA_POSTGRES_PASSWORD:?QA_POSTGRES_PASSWORD belum diatur}
     command:
       - "postgres"
       - "-c"
@@ -79,7 +79,7 @@ services:
       - "-c"
       - "log_timezone=Asia/Jakarta"
     ports:
-      - 5433:5432
+      - "127.0.0.1:5433:5432"
     volumes:
       - ../docker-volumes/postgres-data:/var/lib/postgresql/data
     networks:
@@ -89,9 +89,14 @@ services:
     container_name: docker-redis
     image: redis:7.2.2
     restart: always
-    command: redis-server --requirepass r3tRedis
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${QA_REDIS_PASSWORD:?QA_REDIS_PASSWORD belum diatur}
     ports:
-      - 6380:6379
+      - "127.0.0.1:6380:6379"
     volumes:
       - ../docker-volumes/redis-data:/data
     networks:

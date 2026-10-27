@@ -10,8 +10,8 @@ services:
       - "443:443/udp"  # HTTP/3
     volumes:
       - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - /tmp/caddy-data:/data
-      - /tmp/caddy-config:/config
+      - ../docker-volumes/caddy-data:/data
+      - ../docker-volumes/caddy-config:/config
     depends_on:
       - nginx
     networks:

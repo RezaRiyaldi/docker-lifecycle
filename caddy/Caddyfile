@@ -6,28 +6,59 @@
 	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
+# Authentikasi tambahan untuk dashboard administratif
+(dashboard_auth) {
+	basic_auth {
+		admin $2a$14$RF6EvGKFLNvrvjMtTStpmurnWp6rQCtkCNCq5VWSBikobu8TymvA2
+	}
+}
+
 # PHP Core (Laravel) via nginx internal
 core-r.devgenz.my.id {
 	encode gzip zstd
-
-	reverse_proxy nginx:80 {
-		header_up Host {host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
-		header_up X-Forwarded-Host {host}
-	}
+	reverse_proxy nginx:80
 }
 
 # Node FE (core-r-fe) langsung ke node24
 app.devgenz.my.id {
 	encode gzip zstd
+	reverse_proxy nginx:80
+}
 
-	reverse_proxy node24:3000 {
-		header_up Host {host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
-		header_up X-Forwarded-Host {host}
+# Portainer - management Docker
+portainer.devgenz.my.id {
+#	import dashboard_auth
+	encode gzip zstd
+	reverse_proxy portainer:9000
+}
+
+adminer.devgenz.my.id {
+#	import dashboard_auth
+	encode gzip zstd
+	reverse_proxy adminer:8080
+}
+
+phpmyadmin.devgenz.my.id {
+#	import dashboard_auth
+	encode gzip zstd
+	reverse_proxy phpmyadmin:80
+}
+
+maildev.devgenz.my.id {
+#	import dashboard_auth
+	encode gzip zstd
+	reverse_proxy maildev:1080
+}
+
+minio.devgenz.my.id {
+#	import dashboard_auth
+	encode gzip zstd
+
+	@console path /rusts/console/*
+	handle @console {
+		reverse_proxy minio:9001
+	}
+	handle {
+		reverse_proxy minio:9001
 	}
 }

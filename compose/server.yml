@@ -7,6 +7,7 @@ services:
       - "${NGINX_HTTPS:-8443:443}"
     volumes:
       - ../../php/www:/var/www
+      - ../../node/www:/var/www/node:ro
       - ../../php/nginx:/etc/nginx/conf.d
       - ../../php/ssl:/etc/nginx/ssl
     restart: always

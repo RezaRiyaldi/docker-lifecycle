@@ -1,18 +1,20 @@
 services:
   adminer:
     container_name: docker-adminer
+    profiles: ["tools-admin"]
     image: adminer:latest
     restart: always
     ports:
-      - 8080:8080
+      - "127.0.0.1:8082:8080"
     networks:
       - default
 
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: dev-phpmyadmin
+    profiles: ["tools-admin"]
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     environment:
       PMA_HOST: mysql
       UPLOAD_LIMIT: 300M
@@ -24,20 +26,22 @@ services:
 
   maildev:
     container_name: docker-maildev
+    profiles: ["tools-admin"]
     image: maildev/maildev:latest
     restart: always
     ports:
-      - 1080:1080
-      - 1025:1025
+      - "127.0.0.1:1080:1080"
+      - "127.0.0.1:1025:1025"
     networks:
       - default
 
   portainer:
     container_name: docker-portainer
+    profiles: ["tools-admin"]
     image: portainer/portainer-ce:latest
     restart: always
     ports:
-      - 9000:9000
+      - "127.0.0.1:9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../docker-volumes/portainer-data:/data
@@ -46,16 +50,22 @@ services:
 
   minio:
     container_name: docker-minio
-    image: quay.io/minio/minio
+    profiles: ["tools-admin"]
+    image: rustfs/rustfs:latest
     restart: always
     ports:
-      - 1090:9000
-      - 1091:9001
+      - "127.0.0.1:1090:9000"
+      - "127.0.0.1:1091:9001"
     volumes:
       - ../docker-volumes/minio-data:/data
+      - ../docker-volumes/rustfs-logs:/logs
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=admin12345678
+      - RUSTFS_ACCESS_KEY=${QA_MINIO_ROOT_USER:?QA_MINIO_ROOT_USER belum diatur}
+      - RUSTFS_SECRET_KEY=${QA_MINIO_ROOT_PASSWORD:?QA_MINIO_ROOT_PASSWORD belum diatur}
+      - RUSTFS_ADDRESS=:9000
+      - RUSTFS_CONSOLE_ADDRESS=:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_REGION=us-east-1
     networks:
       - default
-    command: server /data --console-address ":9001"
+    command: ["server", "/data"]
