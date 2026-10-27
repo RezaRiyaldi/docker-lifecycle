@@ -1,276 +1,30 @@
 networks:
   default:
-    name: retts-docker-net
+    name: docker-network
     attachable: true
 
-services:
-  nginx:
-    image: nginx:latest
-    container_name: dev-nginx
-    ports:
-      - "80:80"
-      - "8443:443"
-    volumes:
-      - ../php/www:/var/www
-      - ../php/nginx:/etc/nginx/conf.d
-      - ../php/ssl:/etc/nginx/ssl
-    restart: always
-    depends_on:
-      - php56
-      - php74
-      - php80
-      - php82
-      - php83
-      - php84
-      # - php85
-    networks:
-      - default
-
-  php56:
-    image: byjg/php:5.6-fpm
-    container_name: dev-php56
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php74:
-    build: ../php/docker/php74
-    container_name: dev-php74
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php80:
-    build: ../php/docker/php80
-    container_name: dev-php80
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php81:
-    build: ../php/docker/php81
-    container_name: dev-php81
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php82:
-    build: ../php/docker/php82
-    container_name: dev-php82
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php83:
-    build: ../php/docker/php83
-    container_name: dev-php83
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  php84:
-    build: ../php/docker/php84
-    container_name: dev-php84
-    user: "${UID}:${GID}"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-
-  # php85:
-  #   build: ../php/docker/php85
-  #   container_name: dev-php85
-  #   user: "${UID}:${GID}"
-  #   volumes:
-  #     - ../php/www:/var/www
-  #   networks:
-  #     - default
-  #   restart: always
-
-  queue-worker:
-    build: ../php/docker/php84
-    container_name: dev-queue-worker
-    user: "${UID}:${GID}"
-    command: sh -c "cd /var/www/p84/riyerp && php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --queue=high,default,low"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-    depends_on:
-      - redis
-      - postgres
-
-  scheduler:
-    build: ../php/docker/php84
-    container_name: dev-scheduler
-    user: "${UID}:${GID}"
-    command: sh -c "while true; do cd /var/www/p84/riyerp && php artisan schedule:run --verbose --no-interaction & sleep 60; done"
-    volumes:
-      - ../php/www:/var/www
-    networks:
-      - default
-    restart: always
-    depends_on:
-      - postgres
-      - redis
-
-  mysql:
-    container_name: docker-mysql
-    image: mysql:8.0.34
-    restart: always
-    command:
-      [
-        "--default-authentication-plugin=mysql_native_password",
-        "--character-set-server=utf8mb4",
-        "--collation-server=utf8mb4_unicode_ci",
-        "--default-time-zone=+07:00",
-        "--max-allowed-packet=512M",
-        "--net-read-timeout=600",
-        "--net-write-timeout=600",
-      ]
-    environment:
-      TZ: Asia/Jakarta
-      MYSQL_USER: mysql
-      MYSQL_PASSWORD: mysql
-      MYSQL_ROOT_PASSWORD: mysql
-    ports:
-      - 3307:3306
-    volumes:
-      - ./docker-volumes/mysql-data:/var/lib/mysql
-    networks:
-      - default
-
-  postgres:
-    container_name: docker-postgres
-    image: postgres:16.0
-    restart: always
-    environment:
-      TZ: Asia/Jakarta
-      PGTZ: Asia/Jakarta
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    command:
-      - "postgres"
-      - "-c"
-      - "max_connections=200"
-      - "-c"
-      - "shared_buffers=256MB"
-      - "-c"
-      - "effective_cache_size=1GB"
-      - "-c"
-      - "work_mem=16MB"
-      - "-c"
-      - "maintenance_work_mem=128MB"
-      - "-c"
-      - "timezone=Asia/Jakarta"
-      - "-c"
-      - "log_timezone=Asia/Jakarta"
-    ports:
-      - 5433:5432
-    volumes:
-      - ./docker-volumes/postgres-data:/var/lib/postgresql/data
-    networks:
-      - default
-
-  redis:
-    container_name: docker-redis
-    image: redis:7.2.2
-    restart: always
-    command: redis-server --requirepass redis
-    ports:
-      - 6380:6379
-    volumes:
-      - ./docker-volumes/redis-data:/data
-    networks:
-      - default
-
-  adminer:
-    container_name: docker-adminer
-    image: adminer:latest
-    restart: always
-    ports:
-      - 8080:8080
-    networks:
-      - default
-
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: dev-phpmyadmin
-    ports:
-      - "8081:80"
-    environment:
-      PMA_HOST: mysql
-      UPLOAD_LIMIT: 300M
-      MEMORY_LIMIT: 512M
-      MAX_EXECUTION_TIME: 0
-    networks:
-      - default
-    restart: always
-
-  maildev:
-    container_name: docker-maildev
-    image: maildev/maildev:latest
-    restart: always
-    ports:
-      - 1080:1080
-      - 1025:1025
-    networks:
-      - default
-
-  portainer:
-    container_name: docker-portainer
-    image: portainer/portainer-ce:latest
-    restart: always
-    ports:
-      - 9000:9000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker-volumes/portainer-data:/data
-    networks:
-      - default
-
-  minio:
-    container_name: docker-minio
-    image: quay.io/minio/minio
-    restart: always
-    ports:
-      - 1090:9000
-      - 1091:9001
-    volumes:
-      - ./docker-volumes/minio-data:/data
-    environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=admin12345678
-    networks:
-      - default
-    command: server /data --console-address ":9001"
+include:
+  - compose/server.yml
+  - compose/php.yml
+  - compose/node.yml
+  - compose/database.yml
+  - compose/tools.yml
+  # - compose/supabase.yml
+  - compose/radius.yml
+  - compose/proxy.yml
 
 volumes:
   mysql-data:
+    external: false
+  mysql57-data:
     external: false
   postgres-data:
     external: false
   redis-data:
     external: false
   minio-data:
+    driver: local
+  supabase-db-data:
+    driver: local
+  supabase-storage-data:
     driver: local
