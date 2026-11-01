@@ -13,10 +13,10 @@ include:
   - compose-qa/proxy.yml
 
 volumes:
-  mysql-data:
-    external: false
-  mysql57-data:
-    external: false
+  # mysql-data:
+  #   external: false
+  # mysql57-data:
+  #   external: false
   postgres-data:
     external: false
   redis-data:

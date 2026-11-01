@@ -80,7 +80,7 @@ services:
       - "127.0.0.1:1191:9001"
     volumes:
       - ../docker-volumes/aistor-data:/mnt/data
-      - ../license/minio.license:/minio.license:ro
+      - ../licenses/minio.license:/minio.license:ro
     environment:
       - MINIO_ROOT_USER=${LOCAL_MINIO_AISTOR_ROOT_USER:?LOCAL_MINIO_AISTOR_ROOT_USER belum diatur}
       - MINIO_ROOT_PASSWORD=${LOCAL_MINIO_AISTOR_ROOT_PASSWORD:?LOCAL_MINIO_AISTOR_ROOT_PASSWORD belum diatur}

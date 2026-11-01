@@ -1,3 +1,4 @@
 .env
+/licenses/*
 /docker-volumes
 docker-compose.yml
