@@ -6,13 +6,6 @@
 	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-# Authentikasi tambahan untuk dashboard administratif
-(dashboard_auth) {
-	basic_auth {
-		admin $2a$14$RF6EvGKFLNvrvjMtTStpmurnWp6rQCtkCNCq5VWSBikobu8TymvA2
-	}
-}
-
 # PHP Core (Laravel) via nginx internal
 core-r.devgenz.my.id {
 	encode gzip zstd
@@ -56,26 +49,26 @@ maildev.devgenz.my.id {
 	reverse_proxy maildev:1080
 }
 
+# MinIO Console
 minio.devgenz.my.id {
-	encode gzip zstd
-
-	@console path /console/*
-	handle @console {
-		reverse_proxy minio:9001
-	}
-	handle {
-		reverse_proxy minio:9001
-	}
+    encode gzip zstd
+    reverse_proxy minio:9001
 }
 
-rustfs.devgenz.my.id {
-	encode gzip zstd
+# MinIO S3 API
+s3-minio.devgenz.my.id {
+    encode gzip zstd
+    reverse_proxy minio:9000
+}
 
-	@console path /rusts/console/*
-	handle @console {
-		reverse_proxy rustfs:9000
-	}
-	handle {
-		reverse_proxy rustfs:9000
-	}
+# RustFS Console
+rustfs.devgenz.my.id {
+    encode gzip zstd
+    reverse_proxy rustfs:9001
+}
+
+# RustFS S3 API
+s3.devgenz.my.id {
+    encode gzip zstd
+    reverse_proxy rustfs:9000
 }
