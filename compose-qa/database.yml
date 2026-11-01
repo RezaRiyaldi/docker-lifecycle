@@ -1,5 +1,5 @@
 services:
-  mysql:
+  # mysql:
   #   container_name: docker-mysql
   #   image: mysql:8.0.34
   #   restart: always
