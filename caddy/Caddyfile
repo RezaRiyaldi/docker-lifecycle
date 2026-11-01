@@ -73,9 +73,9 @@ rustfs.devgenz.my.id {
 
 	@console path /rusts/console/*
 	handle @console {
-		reverse_proxy rustfs:9001
+		reverse_proxy rustfs:9000
 	}
 	handle {
-		reverse_proxy rustfs:9001
+		reverse_proxy rustfs:9000
 	}
 }
