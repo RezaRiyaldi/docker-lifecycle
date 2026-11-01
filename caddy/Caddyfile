@@ -59,7 +59,7 @@ maildev.devgenz.my.id {
 minio.devgenz.my.id {
 	encode gzip zstd
 
-	@console path /rusts/console/*
+	@console path /console/*
 	handle @console {
 		reverse_proxy minio:9001
 	}
