@@ -1,0 +1,98 @@
+services:
+  mysql:
+    container_name: docker-mysql
+    image: mysql:8.0.34
+    restart: always
+    command:
+      [
+        "--default-authentication-plugin=mysql_native_password",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--default-time-zone=+07:00",
+        "--max-allowed-packet=512M",
+        "--net-read-timeout=600",
+        "--net-write-timeout=600",
+        "--sql-mode=",
+      ]
+    environment:
+      TZ: Asia/Jakarta
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: r3tMysql
+      MYSQL_ROOT_PASSWORD: r3tMysql
+    ports:
+      - 3307:3306
+    volumes:
+      - ../docker-volumes/mysql-data:/var/lib/mysql
+    networks:
+      - default
+
+  mysql57:
+    container_name: docker-mysql57
+    image: mysql:5.7.43
+    restart: always
+    command:
+      [
+        "--default-authentication-plugin=mysql_native_password",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--default-time-zone=+07:00",
+        "--max-allowed-packet=512M",
+        "--net-read-timeout=600",
+        "--net-write-timeout=600",
+        "--sql-mode=",
+      ]
+    environment:
+      TZ: Asia/Jakarta
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: r3tMysql
+      MYSQL_ROOT_PASSWORD: r3tMysql
+    ports:
+      - 3308:3306
+    volumes:
+      - ../docker-volumes/mysql57-data:/var/lib/mysql
+    networks:
+      - default
+
+  postgres:
+    container_name: docker-postgres
+    image: postgres:16.0
+    restart: always
+    environment:
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: r3tPostgres
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "timezone=Asia/Jakarta"
+      - "-c"
+      - "log_timezone=Asia/Jakarta"
+    ports:
+      - 5433:5432
+    volumes:
+      - ../docker-volumes/postgres-data:/var/lib/postgresql/data
+    networks:
+      - default
+
+  redis:
+    container_name: docker-redis
+    image: redis:7.2.2
+    restart: always
+    command: redis-server --requirepass r3tRedis
+    ports:
+      - 6380:6379
+    volumes:
+      - ../docker-volumes/redis-data:/data
+    networks:
+      - default

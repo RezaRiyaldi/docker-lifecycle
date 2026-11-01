@@ -19,10 +19,20 @@ core-r.devgenz.my.id {
 	reverse_proxy nginx:80
 }
 
+balai-api.devgenz.my.id {
+	encode gzip zstd
+	reverse_proxy nginx:80
+}
+
 # Node FE (core-r-fe) langsung ke node24
 app.devgenz.my.id {
 	encode gzip zstd
 	reverse_proxy nginx:80
+}
+
+balai.devgenz.my.id {
+        encode gzip zstd
+        reverse_proxy nginx:80
 }
 
 # Portainer - management Docker
