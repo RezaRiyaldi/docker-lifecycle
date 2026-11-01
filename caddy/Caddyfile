@@ -24,8 +24,8 @@ app.devgenz.my.id {
 }
 
 balai.devgenz.my.id {
-        encode gzip zstd
-        reverse_proxy nginx:80
+	encode gzip zstd
+	reverse_proxy nginx:80
 }
 
 # Portainer - management Docker
