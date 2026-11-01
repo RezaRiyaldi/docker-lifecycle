@@ -1,0 +1,32 @@
+networks:
+  default:
+    name: docker-network
+    attachable: true
+
+include:
+  - compose-local/server.yml
+  - compose-local/php.yml
+  - compose-local/node.yml
+  - compose-local/database.yml
+  - compose-local/tools.yml
+  # - compose-local/supabase.yml
+  - compose-local/radius.yml
+  - compose-local/proxy.yml
+
+volumes:
+  mysql-data:
+    external: false
+  mysql57-data:
+    external: false
+  postgres-data:
+    external: false
+  redis-data:
+    external: false
+  minio-data:
+    driver: local
+  rustfs-data:
+    driver: local
+  supabase-db-data:
+    driver: local
+  supabase-storage-data:
+    driver: local

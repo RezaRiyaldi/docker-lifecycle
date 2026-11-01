@@ -1,0 +1,131 @@
+services:
+  php56:
+    build:
+      context: ../../php
+      dockerfile: docker/php56/Dockerfile
+    container_name: dev-php56
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p56
+    volumes:
+      - ../../php/www:/var/www
+      - ../../php/ssl:/custom-ssl
+      - ../../php/docker/php56/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ../../php/docker/php56/zzz-custom.conf:/usr/local/etc/php-fpm.d/zzz-custom.conf
+    networks:
+      - default
+    extra_hosts:
+      - "pp_dao.p56.test:host-gateway"
+      - "pp_eproc.p56.test:host-gateway"
+      # - "host.docker.internal:host-gateway"
+    restart: always
+
+  php74:
+    build: ../../php/docker/php74
+    container_name: dev-php74
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p74
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php80:
+    build: ../../php/docker/php80
+    container_name: dev-php80
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p80
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php81:
+    build: ../../php/docker/php81
+    container_name: dev-php81
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p81
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php82:
+    build: ../../php/docker/php82
+    container_name: dev-php82
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p82
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php83:
+    build: ../../php/docker/php83
+    container_name: dev-php83
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p83
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php84:
+    build: ../../php/docker/php84
+    container_name: dev-php84
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p84
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+
+  php85:
+    build: ../../php/docker/php85
+    container_name: dev-php85
+    user: "${UID}:${GID}"
+    working_dir: /var/www/p85
+    volumes:
+      - ../../php/www:/var/www
+      - ../../php/ssl:/custom-ssl
+      - ../../php/docker/php85/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ../../php/docker/php85/zzz-custom.conf:/usr/local/etc/php-fpm.d/zzz-custom.conf
+    networks:
+      - default
+    extra_hosts:
+      - "pp_dao.p85.test:host-gateway"
+      - "pp_eproc.p85.test:host-gateway"
+    restart: always
+
+  queue-worker:
+    build: ../../php/docker/php84
+    container_name: dev-queue-worker
+    user: "${UID}:${GID}"
+    command: sh -c "cd /var/www/p84/riyerp && php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --queue=high,default,low"
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+
+  scheduler:
+    build: ../../php/docker/php84
+    container_name: dev-scheduler
+    user: "${UID}:${GID}"
+    command: sh -c "while true; do cd /var/www/p84/riyerp && php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    volumes:
+      - ../../php/www:/var/www
+    networks:
+      - default
+    restart: always
+    depends_on:
+      - postgres
+      - redis

@@ -4,14 +4,14 @@ networks:
     attachable: true
 
 include:
-  - compose/server.yml
-  - compose/php.yml
-  - compose/node.yml
-  - compose/database.yml
-  - compose/tools.yml
-  # - compose/supabase.yml
-  - compose/radius.yml
-  - compose/proxy.yml
+  - compose-qa/server.yml
+  - compose-qa/php.yml
+  - compose-qa/node.yml
+  - compose-qa/database.yml
+  - compose-qa/tools.yml
+  # - compose-qa/supabase.yml
+  - compose-qa/radius.yml
+  - compose-qa/proxy.yml
 
 volumes:
   mysql-data:

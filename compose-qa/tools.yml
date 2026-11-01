@@ -48,8 +48,8 @@ services:
     networks:
       - default
 
-  minio:
-    container_name: docker-minio
+  rustfs:
+    container_name: docker-rustfs
     profiles: ["tools-admin"]
     image: rustfs/rustfs:latest
     restart: always
@@ -57,11 +57,11 @@ services:
       - "127.0.0.1:1090:9000"
       - "127.0.0.1:1091:9001"
     volumes:
-      - ../docker-volumes/minio-data:/data
+      - ../docker-volumes/rustfs-data:/data
       - ../docker-volumes/rustfs-logs:/logs
     environment:
-      - RUSTFS_ACCESS_KEY=${QA_MINIO_ROOT_USER:?QA_MINIO_ROOT_USER belum diatur}
-      - RUSTFS_SECRET_KEY=${QA_MINIO_ROOT_PASSWORD:?QA_MINIO_ROOT_PASSWORD belum diatur}
+      - RUSTFS_ACCESS_KEY=${QA_RUSTFS_ROOT_USER:?QA_RUSTFS_ROOT_USER belum diatur}
+      - RUSTFS_SECRET_KEY=${QA_RUSTFS_ROOT_PASSWORD:?QA_RUSTFS_ROOT_PASSWORD belum diatur}
       - RUSTFS_ADDRESS=:9000
       - RUSTFS_CONSOLE_ADDRESS=:9001
       - RUSTFS_CONSOLE_ENABLE=true
@@ -69,3 +69,28 @@ services:
     networks:
       - default
     command: ["server", "/data"]
+
+  minio:
+    container_name: docker-minio
+    profiles: ["tools-admin"]
+    image: quay.io/minio/aistor/minio:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1190:9000"
+      - "127.0.0.1:1191:9001"
+    volumes:
+      - ../docker-volumes/aistor-data:/mnt/data
+      - ../licenses/minio.license:/minio.license:ro
+    environment:
+      - MINIO_ROOT_USER=${QA_MINIO-AISTOR_ROOT_USER:?QA_MINIO-AISTOR_ROOT_USER belum diatur}
+      - MINIO_ROOT_PASSWORD=${QA_MINIO-AISTOR_ROOT_PASSWORD:?QA_MINIO-AISTOR_ROOT_PASSWORD belum diatur}
+    networks:
+      - default
+    command:
+      - minio
+      - server
+      - /mnt/data
+      - --console-address
+      - ":9001"
+      - --license
+      - /minio.license
