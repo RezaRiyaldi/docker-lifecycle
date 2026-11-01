@@ -17,8 +17,8 @@ services:
     environment:
       TZ: Asia/Jakarta
       MYSQL_USER: mysql
-      MYSQL_PASSWORD: ${QA_MYSQL_PASSWORD:?QA_MYSQL_PASSWORD belum diatur}
-      MYSQL_ROOT_PASSWORD: ${QA_MYSQL_ROOT_PASSWORD:?QA_MYSQL_ROOT_PASSWORD belum di atur}
+      MYSQL_PASSWORD: ${LOCAL_MYSQL_PASSWORD:?LOCAL_MYSQL_PASSWORD belum diatur}
+      MYSQL_ROOT_PASSWORD: ${LOCAL_MYSQL_ROOT_PASSWORD:?LOCAL_MYSQL_ROOT_PASSWORD belum diatur}
     ports:
       - "127.0.0.1:3307:3306"
     volumes:
@@ -44,8 +44,8 @@ services:
     environment:
       TZ: Asia/Jakarta
       MYSQL_USER: mysql
-      MYSQL_PASSWORD: ${QA_MYSQL57_PASSWORD:?QA_MYSQL57_PASSWORD belum diatur}
-      MYSQL_ROOT_PASSWORD: ${QA_MYSQL57_ROOT_PASSWORD:?QA_MYSQL57_ROOT_PASSWORD belum diatur}
+      MYSQL_PASSWORD: ${LOCAL_MYSQL57_PASSWORD:?LOCAL_MYSQL57_PASSWORD belum diatur}
+      MYSQL_ROOT_PASSWORD: ${LOCAL_MYSQL57_ROOT_PASSWORD:?LOCAL_MYSQL57_ROOT_PASSWORD belum diatur}
     ports:
       - "127.0.0.1:3308:3306"
     volumes:
@@ -61,7 +61,7 @@ services:
       TZ: Asia/Jakarta
       PGTZ: Asia/Jakarta
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${QA_POSTGRES_PASSWORD:?QA_POSTGRES_PASSWORD belum diatur}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?LOCAL_POSTGRES_PASSWORD belum diatur}
     command:
       - "postgres"
       - "-c"
@@ -94,7 +94,7 @@ services:
       - --appendonly
       - "yes"
       - --requirepass
-      - ${QA_REDIS_PASSWORD:?QA_REDIS_PASSWORD belum diatur}
+      - ${LOCAL_REDIS_PASSWORD:?LOCAL_REDIS_PASSWORD belum diatur}
     ports:
       - "127.0.0.1:6380:6379"
     volumes:

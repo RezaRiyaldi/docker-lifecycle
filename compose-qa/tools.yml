@@ -82,8 +82,8 @@ services:
       - ../docker-volumes/aistor-data:/mnt/data
       - ../licenses/minio.license:/minio.license:ro
     environment:
-      - MINIO_ROOT_USER=${QA_MINIO-AISTOR_ROOT_USER:?QA_MINIO-AISTOR_ROOT_USER belum diatur}
-      - MINIO_ROOT_PASSWORD=${QA_MINIO-AISTOR_ROOT_PASSWORD:?QA_MINIO-AISTOR_ROOT_PASSWORD belum diatur}
+      - MINIO_ROOT_USER=${QA_MINIO_AISTOR_ROOT_USER:?QA_MINIO_AISTOR_ROOT_USER belum diatur}
+      - MINIO_ROOT_PASSWORD=${QA_MINIO_AISTOR_ROOT_PASSWORD:?QA_MINIO_AISTOR_ROOT_PASSWORD belum diatur}
     networks:
       - default
     command:

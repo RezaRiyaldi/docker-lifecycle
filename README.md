@@ -152,13 +152,22 @@ Cek UID & GID user di server:
 id -u && id -g
 ```
 
-Edit file `.env`:
+Edit file `.env`. Untuk menjalankan stack local atau QA, isi kredensial pada bagian `LOCAL_*` atau `QA_*` sesuai stack yang dipakai. Gunakan nilai yang berbeda agar kredensial kedua environment tidak tercampur.
+
+Nilai default di `.env.example` ditujukan untuk local: Caddy tidak aktif dan port menggunakan nilai standar. Untuk menjalankan Compose local atau QA, pilih file Compose secara eksplisit:
+
+```bash
+docker compose -f docker-compose.local.yml up -d
+# atau
+docker compose -f docker-compose.qa.yml up -d
+```
+
+Khusus server, override `.env` seperti berikut:
 ```env
-UID=1000  # sesuaikan
-GID=1000  # sesuaikan
+UID=1000  # sesuaikan dengan id -u
+GID=1000  # sesuaikan dengan id -g
 
 # --- Khusus SERVER ---
-# Mengaktifkan Caddy (di lokal baris ini dikosongkan)
 COMPOSE_PROFILES=server
 
 # Nginx dan Node tidak boleh terbuka ke internet; hanya Caddy yang membuka 80/443.
@@ -167,14 +176,7 @@ NGINX_HTTP=127.0.0.1:8080:80
 NGINX_HTTPS=127.0.0.1:8443:443
 NODE24_PORT=127.0.0.1:3024:3000
 
-# Kosongkan jika tidak dipakai
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
 ```
-
-Tambahkan juga ketiga variabel server (`COMPOSE_PROFILES`, `NGINX_*`, `NODE24_PORT`) ke `.env.example` sebagai contoh, tapi biarkan kosong di lokal supaya perilaku lokal tidak berubah.
 
 > Hindari menggunakan `.env` yang ada saat ini di repo karena berisi kredensial. Lebih aman buat baru dari `.env.example`.
 
@@ -310,25 +312,82 @@ ls
 
 Sesuaikan nama file dengan isi folder kamu. Vhost `p85.conf` dan `core-r.conf` (bagian 9.3) boleh tetap ada.
 
-## 7. Menjalankan Stack
+## 7. Menjalankan dan Mengelola Service
 
-Dari direktori `docker/`. Di server, **jalankan hanya service yang dibutuhkan**, jangan `docker compose up -d` tanpa nama service (itu menyalakan semua versi PHP, Node, database, dan tools).
+Jalankan perintah dari direktori `docker/` dan pilih file Compose yang sesuai. Selalu tulis file Compose secara eksplisit agar tidak salah mengelola stack:
 
 ```bash
 cd ~/project/docker
 
-# Build & jalankan (server)
+# Local
+docker compose -f docker-compose.local.yml ps
+
+# QA
+docker compose -f docker-compose.qa.yml ps
+```
+
+### Menyalakan atau memperbarui service
+
+Cantumkan nama service yang ingin dijalankan. `up -d` membuat container jika belum ada dan menerapkan perubahan konfigurasi atau environment; tambahkan `--build` jika image perlu dibangun ulang.
+
+```bash
+# Contoh local: jalankan nginx dan PHP 8.5
+docker compose -f docker-compose.local.yml up -d nginx php85
+
+# Contoh QA:
+# docker compose -f docker-compose.qa.yml up -d nginx php85
+
+# Rebuild lalu jalankan service tertentu
+docker compose -f docker-compose.local.yml up -d --build php85
+```
+
+Compose juga akan menjalankan dependency yang didefinisikan untuk service tersebut. Di server, **jangan jalankan `up -d` tanpa nama service** karena itu dapat menyalakan semua versi PHP, Node, database, dan tools. Contoh service server:
+
+```bash
 docker compose up -d --build caddy nginx php85 node24 postgres redis
 ```
 
-Tambah service lain (mis. `mysql`) hanya jika dibutuhkan.
+Tools seperti Adminer, phpMyAdmin, Maildev, Portainer, RustFS, dan MinIO menggunakan profile `tools-admin`. Aktifkan profile saat menyalakan atau me-restart service tersebut:
 
-Cek status & log:
 ```bash
-docker compose ps
-docker compose logs -f nginx
-docker compose logs -f caddy
+docker compose -f docker-compose.local.yml --profile tools-admin up -d adminer
+docker compose -f docker-compose.local.yml --profile tools-admin up -d adminer phpmyadmin maildev
 ```
+
+### Me-restart service
+
+`restart` hanya menghentikan dan menjalankan kembali container yang sudah ada. Perintah ini **tidak menerapkan perubahan `.env` atau konfigurasi Compose**; gunakan `up -d` untuk itu.
+
+```bash
+# Restart satu atau beberapa service yang sedang berjalan
+docker compose -f docker-compose.local.yml restart php85
+docker compose -f docker-compose.local.yml restart nginx php85 node24
+
+# Untuk QA, ganti docker-compose.local.yml dengan docker-compose.qa.yml
+
+# Restart service tools yang memakai profile
+docker compose -f docker-compose.local.yml --profile tools-admin restart adminer phpmyadmin
+```
+
+### Status, log, dan menghentikan service
+
+```bash
+# Status semua service pada stack terpilih
+docker compose -f docker-compose.local.yml ps
+
+# Ikuti log satu service (Ctrl+C untuk berhenti mengikuti log)
+docker compose -f docker-compose.local.yml logs -f nginx
+
+# Hentikan service tertentu tanpa menghapus container
+docker compose -f docker-compose.local.yml stop php85
+
+# Hentikan dan hapus container stack; data volume tetap dipertahankan
+docker compose -f docker-compose.local.yml down
+```
+
+Untuk QA, ganti `docker-compose.local.yml` dengan `docker-compose.qa.yml` pada perintah di atas. Hindari `down -v` kecuali memang ingin menghapus volume dan data service secara permanen. Jika perintah gagal karena variabel kredensial wajib belum diisi, lengkapi variabel `LOCAL_*` atau `QA_*` yang sesuai di `.env`.
+
+Untuk melihat log Caddy di server, gunakan `docker compose logs -f caddy`.
 
 Pastikan hanya port yang diinginkan yang terbuka ke luar:
 ```bash

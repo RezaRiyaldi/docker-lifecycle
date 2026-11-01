@@ -12,20 +12,20 @@ services:
       - ../../php/ssl:/etc/nginx/ssl
     restart: always
     depends_on:
-      # php56:
-      #   condition: service_started
-      # php74:
-      #   condition: service_started
-      # php80:
-      #   condition: service_started
-      # php81:
-      #   condition: service_started
-      # php82:
-      #   condition: service_started
-      # php83:
-      #   condition: service_started
-      # php84:
-      #   condition: service_started
+      php56:
+        condition: service_started
+      php74:
+        condition: service_started
+      php80:
+        condition: service_started
+      php81:
+        condition: service_started
+      php82:
+        condition: service_started
+      php83:
+        condition: service_started
+      php84:
+        condition: service_started
       php85:
         condition: service_started
     networks:

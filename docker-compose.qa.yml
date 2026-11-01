@@ -6,11 +6,10 @@ networks:
 include:
   - compose-qa/server.yml
   - compose-qa/php.yml
-  - compose-qa/node.yml
+  # - compose-qa/node.yml
   - compose-qa/database.yml
   - compose-qa/tools.yml
-  # - compose-qa/supabase.yml
-  - compose-qa/radius.yml
+  # - compose-qa/radius.yml
   - compose-qa/proxy.yml
 
 volumes:
@@ -23,8 +22,4 @@ volumes:
   redis-data:
     external: false
   minio-data:
-    driver: local
-  supabase-db-data:
-    driver: local
-  supabase-storage-data:
     driver: local
