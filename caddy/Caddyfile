@@ -37,31 +37,26 @@ balai.devgenz.my.id {
 
 # Portainer - management Docker
 portainer.devgenz.my.id {
-#	import dashboard_auth
 	encode gzip zstd
 	reverse_proxy portainer:9000
 }
 
 adminer.devgenz.my.id {
-#	import dashboard_auth
 	encode gzip zstd
 	reverse_proxy adminer:8080
 }
 
 phpmyadmin.devgenz.my.id {
-#	import dashboard_auth
 	encode gzip zstd
 	reverse_proxy phpmyadmin:80
 }
 
 maildev.devgenz.my.id {
-#	import dashboard_auth
 	encode gzip zstd
 	reverse_proxy maildev:1080
 }
 
 minio.devgenz.my.id {
-#	import dashboard_auth
 	encode gzip zstd
 
 	@console path /rusts/console/*
@@ -70,5 +65,17 @@ minio.devgenz.my.id {
 	}
 	handle {
 		reverse_proxy minio:9001
+	}
+}
+
+rustfs.devgenz.my.id {
+	encode gzip zstd
+
+	@console path /rusts/console/*
+	handle @console {
+		reverse_proxy rustfs:9001
+	}
+	handle {
+		reverse_proxy rustfs:9001
 	}
 }
