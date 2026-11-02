@@ -4,12 +4,15 @@ services:
     container_name: dev-nginx
     ports:
       - "${NGINX_HTTP:-80:80}"
+      # For both localhost and SSL domain access, keep both port mappings.
+      # For HTTP-only access, comment out this HTTPS mapping.
       - "${NGINX_HTTPS:-8443:443}"
     volumes:
+      # Sesuaikan path project anda di bawah ini dengan path project Anda.
       - ../../php/www:/var/www
       - ../../node/www:/var/www/node:ro
-      - ../../php/nginx:/etc/nginx/conf.d
-      - ../../php/ssl:/etc/nginx/ssl
+      - ../nginx:/etc/nginx/conf.d
+      - ../ssl:/etc/nginx/ssl
     restart: always
     depends_on:
       php56:

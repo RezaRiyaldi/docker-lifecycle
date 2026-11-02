@@ -41,6 +41,21 @@ Alur request di **lokal** (tanpa Caddy, seperti sebelumnya):
 Browser ──80/8443──► nginx ──► php-fpm (per versi)     (sertifikat dari mkcert)
 ```
 
+### Pilihan akses PHP lokal
+
+Konfigurasi Nginx di `docker/nginx/pXX.conf` memakai SSL dan domain lokal, misalnya `https://nama-project.p85.test`. Untuk akses HTTP tanpa SSL, gunakan template `docker/nginx/localhost.conf.example` dan URL `http://localhost/p85/nama-project/`. Kedua mode bisa aktif bersamaan: salin template menjadi `localhost.conf` dan biarkan file `pXX.conf` aktif.
+
+Mode `localhost` juga dapat menjalankan file PHP langsung dan routing front-controller. Folder proyek harus berada di `php/www/pXX/nama-project/`, dan service PHP untuk versi yang dipakai harus aktif di Compose.
+
+Untuk mengaktifkan akses localhost:
+
+1. Salin `docker/nginx/localhost.conf.example` menjadi `docker/nginx/localhost.conf`.
+2. Biarkan file `pXX.conf` aktif jika ingin akses domain+SSL juga. Untuk HTTP-only, nonaktifkan file-file tersebut dengan mengubah ekstensi agar tidak berakhiran `.conf`.
+3. Compose lokal memetakan HTTP host port 80 dan HTTPS host port 8443 secara default.
+4. Aktifkan service PHP versi yang diperlukan di Compose lokal, lalu jalankan Nginx dan PHP-FPM.
+
+Contoh akses HTTP: `http://localhost/p82/nama-project/`. Untuk Laravel, atur `APP_URL` ke URL tersebut. Akses SSL menggunakan `https://nama-project.p82.test:8443` dengan mapping port default; nama domain lokal harus diarahkan ke `127.0.0.1`. Untuk kembali ke domain+SSL saja, nonaktifkan `localhost.conf`.
+
 ## 2. Kondisi Saat Ini (Quick Review)
 
 | Item | Status | Keterangan |
