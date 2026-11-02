@@ -14,17 +14,19 @@ Dari root workspace (`/home/boy/Documents/project/`):
 .
 ├── docker/        # Stack docker (compose, config terkait)
 │   ├── compose/   # server.yml, php.yml, node.yml, database.yml, tools.yml, proxy.yml (Caddy)
+│   ├── php/       # Dockerfile per versi PHP (php82/Dockerfile, dll.)
+│   ├── nginx/     # vhost Nginx yang di-mount ke container Nginx
 │   ├── caddy/     # Caddyfile (reverse proxy + HTTPS otomatis, dipakai di server)
 │   └── docker-volumes/   # data persisten (database, caddy-data, dll)
-├── php/           # PHP apps, Dockerfile per versi, nginx vhost, ssl
-│   ├── docker/    # Dockerfile per versi PHP
-│   ├── nginx/     # vhost nginx yang di-mount ke container nginx
+├── php/           # Data PHP di host
 │   ├── ssl/       # sertifikat LOKAL (mkcert). Tidak dipakai di server.
 │   └── www/       # source code PHP (p56/p74/.../p85/...)
 └── node/          # Node apps & Dockerfile
     ├── docker/    # Dockerfile per versi Node
     └── www/       # source code Node (n20/n22/n24/...)
 ```
+
+> **Catatan direktori:** Dockerfile PHP berada di `docker/php/phpXX/`, sedangkan konfigurasi vhost berada di `docker/nginx/`. Keduanya terpisah dari source aplikasi di `php/www/` dan sertifikat lokal di `php/ssl/`.
 
 Alur request di **server**:
 
@@ -44,9 +46,9 @@ Browser ──80/8443──► nginx ──► php-fpm (per versi)     (sertifik
 | Item | Status | Keterangan |
 |---|---|---|
 | Multi-PHP (5.6 - 8.5) | OK | Tersedia di `compose/php.yml` |
-| PHP 8.5 (`php85`) | OK | Cocok buat `p85/core-r`. Ada `custom.ini`, `zzz-custom.conf`, mount `ssl/`. |
+| PHP 8.5 (`php85`) | OK | Cocok buat `p85/core-r`. Dockerfile dan file konfigurasi PHP ada di `docker/php/php85/`; ada `custom.ini`, `zzz-custom.conf`, dan mount `php/ssl/`. |
 | Node (20/22/24) | OK | Tersedia. `node24` expose `3024:3000`. |
-| Nginx reverse PHP | OK | `php/nginx/p85.conf` pakai pola subdomain `*.p85.test` + redirect HTTP->HTTPS + fastcgi ke `dev-php85:9000`. Dipakai untuk lokal. |
+| Nginx reverse PHP | OK | `docker/nginx/p85.conf` pakai pola subdomain `*.p85.test` + redirect HTTP->HTTPS + fastcgi ke `dev-php85:9000`. Dipakai untuk lokal. |
 | Reverse proxy + HTTPS di server | **BARU: Caddy** | `compose/proxy.yml` + `caddy/Caddyfile`. Hanya aktif di server (profil `server`). |
 | Nginx reverse Node | Tidak perlu | Di server, Caddy langsung meneruskan ke `node24:3000`. |
 | Path Node | PERLU PENYESUAIAN | `node24` di `compose/node.yml` punya `working_dir: /var/www/n24/my-app` padahal project kamu ada di `../node/www/n24/core-r-fe`. Perlu disesuaikan atau dibuat symlink. |
@@ -222,7 +224,7 @@ services:
       - "${NGINX_HTTPS:-8443:443}"
     volumes:
       - ../../php/www:/var/www
-      - ../../php/nginx:/etc/nginx/conf.d
+      - ../nginx:/etc/nginx/conf.d
       - ../../php/ssl:/etc/nginx/ssl
     restart: always
     depends_on:
@@ -301,10 +303,10 @@ Dua langkah, lakukan keduanya di salinan **server**:
 
 **d) Vhost nginx lama**
 
-File vhost PHP lama di `php/nginx/` (p56, p74, p80, dst.) mengarah ke container `dev-php56:9000` dan seterusnya. Jika container itu tidak dijalankan di server, nginx gagal start dengan pesan `host not found in upstream`. Di server, **simpan hanya vhost yang dipakai**:
+File vhost PHP lama di `docker/nginx/` (p56, p74, p80, dst.) mengarah ke container `dev-php56:9000` dan seterusnya. Jika container itu tidak dijalankan di server, nginx gagal start dengan pesan `host not found in upstream`. Di server, **simpan hanya vhost yang dipakai**:
 
 ```bash
-cd ~/project/php/nginx
+cd ~/project/docker/nginx
 mkdir -p ../nginx-disabled
 mv p56.conf p74.conf p80.conf p81.conf p82.conf p83.conf p84.conf ../nginx-disabled/ 2>/dev/null
 ls
@@ -535,7 +537,7 @@ docker exec dev-caddy caddy reload --config /etc/caddy/Caddyfile
 ```
 
 ### 9.3 Vhost Nginx untuk PHP (`core-r`) - tanpa SSL
-Buat file vhost baru di `~/project/php/nginx/core-r.conf`. Nginx hanya mendengarkan port 80 di dalam Docker (dari Caddy), jadi tidak ada blok SSL:
+Buat file vhost baru di `~/project/docker/nginx/core-r.conf`. Nginx hanya mendengarkan port 80 di dalam Docker (dari Caddy), jadi tidak ada blok SSL:
 
 ```nginx
 server {
@@ -653,10 +655,10 @@ Buka browser dan test langsung lewat: `https://core-r.devgenz.my.id` dan `https:
 - [ ] Edit `compose/server.yml` (port dari variabel, `depends_on` hanya `php85`)
 - [ ] Tambah `compose/proxy.yml` dan `caddy/Caddyfile`, daftarkan `proxy.yml` di `include`
 - [ ] Ikat port `database.yml` ke `127.0.0.1`, jangan jalankan `tools.yml` kecuali perlu
-- [ ] Pindahkan vhost nginx PHP lama yang tidak dipakai ke `php/nginx-disabled/`
+- [ ] Pindahkan vhost nginx PHP lama yang tidak dipakai ke `docker/nginx-disabled/`
 - [ ] Sesuaikan `node24` working_dir atau buat symlink ke `core-r-fe`
 - [ ] Setup `.env` di `php/www/p85/core-r/` (`APP_URL`, `APP_DEBUG=false`) & `node/www/n24/core-r-fe/` (`VITE_API_URL`)
-- [ ] Buat vhost `core-r.conf` di `php/nginx/` (tanpa SSL), atur trusted proxy dan CORS di Laravel
+- [ ] Buat vhost `core-r.conf` di `docker/nginx/` (tanpa SSL), atur trusted proxy dan CORS di Laravel
 - [ ] Atur `allowedHosts` dan `hmr.clientPort` di Vite
 - [ ] `docker compose up -d --build caddy nginx php85 node24 postgres redis`
 - [ ] Verifikasi `sudo ss -tlnp`: hanya 22, 80, 443 yang terbuka ke luar
