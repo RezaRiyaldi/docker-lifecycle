@@ -1,4 +1,18 @@
 services:
+  dbgate:
+    container_name: docker-dbgate
+    profiles: ["tools-admin"]
+    image: dbgate/dbgate:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8083:3000"
+    environment:
+      LOGIN: admin
+      PASSWORD: ${QA_DBGATE_PASSWORD:?QA_DBGATE_PASSWORD belum diatur}
+    volumes:
+      - ../docker-volumes/dbgate-data:/root/.dbgate
+    networks:
+      - default
   adminer:
     container_name: docker-adminer
     profiles: ["tools-admin"]
